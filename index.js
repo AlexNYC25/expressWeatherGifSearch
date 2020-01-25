@@ -57,6 +57,11 @@ app.get('/search', (req, res) => {
                     res.on('end', () => {
                         let giphyJSON = JSON.parse(giphyBody);
                         let gifItemNumber = Math.floor(Math.random() * 20);
+                        let gifID = giphyJSON.data[gifItemNumber].id;
+                        let gifURL = giphyJSON.data[gifItemNumber].url;
+                        let gifTitle = giphyJSON.data[gifItemNumber].title;
+
+                        let localGifURL = './gif/'.concat(gifID, '.gif');
                     })
                 })
                 
