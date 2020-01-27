@@ -1,10 +1,14 @@
 html
     head
         title Weather Gif Search
+        link(rel="stylesheet", href="./css/index.css")
     body
-        form(action="search", method="get" id="mainForm")
-            fieldset
-                legend Weather GIF Search
-                input(type="text", name="zip", id="zip", placeholder="Enter your Zip code")
-                input(type="submit", value="search")
-            
+        
+        div(id="form-container")
+            h1 Enter Your Zipcode into the form below.
+            form(action="search", method="get" id="mainForm")
+                fieldset
+                    legend Weather GIF Search
+                    input(type="text", name="zip", id="zip", placeholder="Enter your Zip code")
+                    input(type="submit", value="search")
+                

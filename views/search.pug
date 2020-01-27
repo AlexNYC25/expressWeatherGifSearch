@@ -1,11 +1,13 @@
 html
     head
-
+        title Weather GIF
+        link(rel="stylesheet", href="./css/search.css")
     body
-        h1 #{title}
-        p #{description}
-        img(src=localURL alt=gifDescription)
-        img(src="../gif/2Zx1Pa8Fcs9xu.gif", alt="", srcset="")
-        p 
-            a(href=gifURL) Original GIPHY page
+        div(id="main-content")
+            h1(id="main-title") #{title}
+            p(id="main-description") #{description}
+            div(id="image-container")
+                img(src=localURL alt=gifDescription id="weatherGif")
+                p 
+                    a(href=gifURL) Original GIPHY page
         
