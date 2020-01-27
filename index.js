@@ -2,6 +2,7 @@
 const express = require('express');
 const querystring = require('querystring');
 const https = require('https');
+const fs = require('fs');
 
 
 const app = express();
@@ -21,10 +22,30 @@ app.set('views', './views');
 app.get('/', (req, res) => {
     res.render('index');
 });
+app.get('/gif/', (req, res) => {
+    let dirStart = '.';
+    console.log(req.query)
+    let gif = fs.createReadStream(dirStart.concat(req.query));
+    gif.on('error', () => {
+        res.writeHead(404);
+        res.end();
+    })
+})
 app.get('/search', (req, res) => {
     let zipcode = req.query.zip;
     let openWeatherQuery = querystring.stringify({zip:zipcode, appid:CREDENTIALS["openWeather"].apikey})
     console.log(req.query.zip)
+
+    // pass zipcode, temperature, 
+    const generateWebpage = (dataItems) => {
+        let mainTitle = `The Current Weather in ${dataItems.zipcode} is ${dataItems.temp}`
+        let description = `The maximum temperature is ${dataItems.tempMax}, the minimum temperature is ${dataItems.tempMin}.
+                           Currently outside it is: ${dataItems.desc}.
+                          `
+
+
+        res.render('search', {title: mainTitle, description: description, localURL: dataItems.localURL, gifDescription: dataItems.gifTitle, gifURL: dataItems.gifURL});
+    }
 
     let openWeatherResult = https.request(OPENWEATHER.concat(openWeatherQuery), (res) => {
         let weatherBody = '';
@@ -44,10 +65,11 @@ app.get('/search', (req, res) => {
                 let temp = Math.round((weatherJSON.main.temp * (9/5)) - 459.67);
                 let formatedTempMax = Math.round((weatherJSON.main.temp_max * (9/5)) - 459.67);
                 let formatedTempMin = Math.round((weatherJSON.main.temp_min * (9/5)) - 459.67);
+            
                 console.log(desc);
 
                 let giphyResultOffset = Math.floor(Math.random() * 25);
-                let giphyQuery = querystring.stringify({api_key:credentials["giphy"].apikey ,q:desc, offset:giphyResultOffset});
+                let giphyQuery = querystring.stringify({api_key:CREDENTIALS["giphy"].apikey ,q:desc, offset:giphyResultOffset});
 
                 let giphyRequest = https.request(GIPHY.concat(giphyQuery), (res) => {
                     let giphyBody = '';
@@ -58,10 +80,35 @@ app.get('/search', (req, res) => {
                         let giphyJSON = JSON.parse(giphyBody);
                         let gifItemNumber = Math.floor(Math.random() * 20);
                         let gifID = giphyJSON.data[gifItemNumber].id;
-                        let gifURL = giphyJSON.data[gifItemNumber].url;
+                        let gifURL = giphyJSON.data[gifItemNumber].images.downsized.url;
                         let gifTitle = giphyJSON.data[gifItemNumber].title;
-
+                        
                         let localGifURL = './gif/'.concat(gifID, '.gif');
+
+                        fs.access(localGifURL, fs.F_OK, (err) => {
+                            if(err){
+                                let gifRequest = https.get(gifURL, function(res){
+                                    let gifItem = fs.createWriteStream(localGifURL, {'encoding': null});
+                                    res.pipe(gifItem);
+
+                                    gifItem.on('finish', () => {
+                                        // generate web page
+                                        generateWebpage({zipcode: zipcode, temp: temp, tempMax: formatedTempMax, tempMin: formatedTempMin,tempDesc: desc, localURL: localGifURL, gifURL: gifURL, gifTitle: gifTitle})
+                                    })
+                                })
+
+                                gifRequest.on('error', (err) => {
+                                    console.log(err);
+
+                                })
+
+                                gifRequest.end();
+                            }
+                            else{
+                                // generate webpage right away
+                                generateWebpage("test");
+                            }
+                        })
                     })
                 })
                 
@@ -79,7 +126,8 @@ app.get('/search', (req, res) => {
     })
 
     openWeatherResult.end();
-})
+});
+
 
 
 app.listen(port, () => {
