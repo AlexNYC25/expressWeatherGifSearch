@@ -19,28 +19,31 @@ const CREDENTIALS = require('./auth/credentials.json');
 app.set('view engine', 'pug');
 app.set('views', './views');
 
+// sets up static access for public gif folder to server up gif files
+app.use('/gif', express.static('gif'));
+
 app.get('/', (req, res) => {
     res.render('index');
 });
-app.get('/gif/', (req, res) => {
-    let dirStart = '.';
-    console.log(req.query)
-    let gif = fs.createReadStream(dirStart.concat(req.query));
-    gif.on('error', () => {
-        res.writeHead(404);
-        res.end();
-    })
-})
+// set up static serving get function
+
 app.get('/search', (req, res) => {
     let zipcode = req.query.zip;
     let openWeatherQuery = querystring.stringify({zip:zipcode, appid:CREDENTIALS["openWeather"].apikey})
     console.log(req.query.zip)
 
+    // ensures gif folder exists
+    try {
+        fs.statSync('./gif');
+      } catch(e) {
+        fs.mkdirSync('./gif');
+      }
+
     // pass zipcode, temperature, 
     const generateWebpage = (dataItems) => {
         let mainTitle = `The Current Weather in ${dataItems.zipcode} is ${dataItems.temp}`
         let description = `The maximum temperature is ${dataItems.tempMax}, the minimum temperature is ${dataItems.tempMin}.
-                           Currently outside it is: ${dataItems.desc}.
+                           Currently outside it is: ${dataItems.tempDesc}.
                           `
 
 
@@ -91,6 +94,8 @@ app.get('/search', (req, res) => {
                                     let gifItem = fs.createWriteStream(localGifURL, {'encoding': null});
                                     res.pipe(gifItem);
 
+                                    console.log(`GIf url is ${gifURL}`)
+
                                     gifItem.on('finish', () => {
                                         // generate web page
                                         generateWebpage({zipcode: zipcode, temp: temp, tempMax: formatedTempMax, tempMin: formatedTempMin,tempDesc: desc, localURL: localGifURL, gifURL: gifURL, gifTitle: gifTitle})
@@ -106,7 +111,7 @@ app.get('/search', (req, res) => {
                             }
                             else{
                                 // generate webpage right away
-                                generateWebpage("test");
+                                generateWebpage({zipcode: zipcode, temp: temp, tempMax: formatedTempMax, tempMin: formatedTempMin,tempDesc: desc, localURL: localGifURL, gifURL: gifURL, gifTitle: gifTitle})
                             }
                         })
                     })
