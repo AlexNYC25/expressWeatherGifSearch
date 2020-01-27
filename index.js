@@ -22,6 +22,8 @@ app.set('views', './views');
 // sets up static access for public gif folder to server up gif files
 app.use('/gif', express.static('gif'));
 
+app.use('/css', express.static('css'))
+
 app.get('/', (req, res) => {
     res.render('index');
 });
@@ -43,7 +45,7 @@ app.get('/search', (req, res) => {
     const generateWebpage = (dataItems) => {
         let mainTitle = `The Current Weather in ${dataItems.zipcode} is ${dataItems.temp}`
         let description = `The maximum temperature is ${dataItems.tempMax}, the minimum temperature is ${dataItems.tempMin}.
-                           Currently outside it is: ${dataItems.tempDesc}.
+                           Currently outside it is: ${dataItems.tempDesc} degrees.
                           `
 
 
