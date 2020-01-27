@@ -21,14 +21,14 @@ app.set('views', './views');
 
 // sets up static access for public gif folder to server up gif files
 app.use('/gif', express.static('gif'));
-
+// sets up access to css files
 app.use('/css', express.static('css'))
 
+// basic entry point
 app.get('/', (req, res) => {
     res.render('index');
 });
-// set up static serving get function
-
+// set up search results page
 app.get('/search', (req, res) => {
     let zipcode = req.query.zip;
     let openWeatherQuery = querystring.stringify({zip:zipcode, appid:CREDENTIALS["openWeather"].apikey})
@@ -45,13 +45,13 @@ app.get('/search', (req, res) => {
     const generateWebpage = (dataItems) => {
         let mainTitle = `The Current Weather in ${dataItems.zipcode} is ${dataItems.temp}`
         let description = `The maximum temperature is ${dataItems.tempMax}, the minimum temperature is ${dataItems.tempMin}.
-                           Currently outside it is: ${dataItems.tempDesc} degrees.
-                          `
+                           Currently outside it is: ${dataItems.tempDesc} degrees.`
 
-
+        // passes json object for variables for pug file
         res.render('search', {title: mainTitle, description: description, localURL: dataItems.localURL, gifDescription: dataItems.gifTitle, gifURL: dataItems.gifURL});
     }
 
+    // starts api call for openweather 
     let openWeatherResult = https.request(OPENWEATHER.concat(openWeatherQuery), (res) => {
         let weatherBody = '';
         res.on('data', (chunk) => {
@@ -70,12 +70,12 @@ app.get('/search', (req, res) => {
                 let temp = Math.round((weatherJSON.main.temp * (9/5)) - 459.67);
                 let formatedTempMax = Math.round((weatherJSON.main.temp_max * (9/5)) - 459.67);
                 let formatedTempMin = Math.round((weatherJSON.main.temp_min * (9/5)) - 459.67);
-            
-                console.log(desc);
+        
 
                 let giphyResultOffset = Math.floor(Math.random() * 25);
                 let giphyQuery = querystring.stringify({api_key:CREDENTIALS["giphy"].apikey ,q:desc, offset:giphyResultOffset});
 
+                // start of api call to giphy
                 let giphyRequest = https.request(GIPHY.concat(giphyQuery), (res) => {
                     let giphyBody = '';
                     res.on('data', (chunk) => {
@@ -95,8 +95,6 @@ app.get('/search', (req, res) => {
                                 let gifRequest = https.get(gifURL, function(res){
                                     let gifItem = fs.createWriteStream(localGifURL, {'encoding': null});
                                     res.pipe(gifItem);
-
-                                    console.log(`GIf url is ${gifURL}`)
 
                                     gifItem.on('finish', () => {
                                         // generate web page
